@@ -1,6 +1,7 @@
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane.optimize import NesterovMomentumOptimizer
+import matplotlib.pyplot as plt
 
 
 dev = qml.device("default.qubit", wires=4)
@@ -120,6 +121,8 @@ batch_size = 5  # Using batched stochastic gradient descent for speedup
 weights = weights_init
 bias = bias_init
 
+cost_list = []
+accuracy_list = []
 for it in range(25):
 
     # Updating the weights by one optimizer step - TODO understand
@@ -137,3 +140,21 @@ for it in range(25):
             it + 1, cost(weights, bias, X, Y), acc
         )
     )
+    cost_list.append(cost(weights, bias, X, Y))
+    accuracy_list.append(acc)
+
+
+
+#Plotting the results
+plt.figure(figsize=(10,5))
+plt.plot(cost_list)
+plt.xlabel('Iteration')
+plt.ylabel('Cost function')
+plt.savefig("cost_iteration.png")
+
+plt.figure(figsize=(10,5))
+plt.plot(accuracy_list)
+# plt.ylim(0.0, 1.0)
+plt.xlabel('Iteration')
+plt.ylabel('Accuracy')
+plt.savefig("accuracy.png")
