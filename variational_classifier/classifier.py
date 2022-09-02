@@ -10,16 +10,12 @@ dev = qml.device("default.qubit", wires=4)
 def layer(W):
 
     # Rotating all qubits by a tunable parameter
-
-    # TODO: are we hardcoding 4 qubits? Is this the optimal ansatz? Maybe we can vary this
     qml.Rot(W[0, 0], W[0, 1], W[0, 2], wires=0)
     qml.Rot(W[1, 0], W[1, 1], W[1, 2], wires=1)
     qml.Rot(W[2, 0], W[2, 1], W[2, 2], wires=2)
     qml.Rot(W[3, 0], W[3, 1], W[3, 2], wires=3)
 
     # Entangling each qubit with its neighbour
-    # TODO: test with a 2-layered cell ({{0, 1}, {2, 3}}, {{1, 2}, {3, 0}}) - lighter implementation
-    # Symmetry: better for universal computation, but it depends on the problem
     qml.CNOT(wires=[0, 1])
     qml.CNOT(wires=[1, 2])
     qml.CNOT(wires=[2, 3])
@@ -43,7 +39,8 @@ def circuit(weights, x): # Using weights to name the tunable parameters, just li
     return qml.expval(qml.PauliZ(0))
 
 
-def variational_classifier(weights, bias, x): # Classical bias b_L: a_L = \sigma{w_L * a_{L-1} + b_L}
+def variational_classifier(weights, bias, x): 
+    # Classical bias b_L: a_L = \sigma{w_L * a_{L-1} + b_L}
     return circuit(weights, x) + bias
 
 
@@ -93,11 +90,6 @@ data = np.loadtxt("data/parity.txt")
 X = np.array(data[:, :-1], requires_grad=False)
 Y = np.array(data[:, -1], requires_grad=False)
 Y = 2 * Y - np.ones(len(Y)) # Shifting labels from {0, 1} to {-1, 1}
-
-# A glimse into the dataset
-#for i in range(5):
-#    print("X = {}, Y = {: d}".format(X[i], int(Y[i])))
-#print("...")
 
 # Initializing the weights and the bias randomly,
 # with a fixed seed for reproducibility

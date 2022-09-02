@@ -15,17 +15,11 @@ for i in range(10):
     new_file = np.loadtxt(filename)
     results_list.append(new_file)
 
-# print(results_list)
-# y, error = tolerant_mean(results_list)
-# x = 10*np.arange(len(y))
 max_length = max([len(run) for run in results_list])
 x = np.arange(max_length)
 
-# print("\n\Y, Err: {} \n\n {}\n\n".format(y, error))
-
 # # Saving the resulting plots
 plt.figure(figsize=(10,5))
-# plt.fill_between(x, y - error, y + error, alpha=0.2, label='error band')
 for i in range(len(results_list)):
     plt.plot(results_list[i], label=i+1)
 
@@ -33,6 +27,4 @@ plt.grid(True)
 plt.legend(title="Run id")
 plt.xlabel('Episode')
 plt.ylabel('Average of collected rewards')
-# ax.plot(np.arange(len(y))+1, y, color='green')
 plt.savefig("quantum_dqn_avg_10_all_lines.png")
-

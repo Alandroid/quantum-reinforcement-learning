@@ -5,7 +5,6 @@ importlib.reload(pkg_resources)
 import tensorflow as tf
 import tensorflow_quantum as tfq
 
-
 import gym, cirq, sympy
 import numpy as np
 from functools import reduce
@@ -13,12 +12,6 @@ from collections import deque, defaultdict
 import matplotlib.pyplot as plt
 from cirq.contrib.svg import SVGCircuit
 tf.get_logger().setLevel('ERROR')
-
-# full_average_list = []
-# nmbr_avgs = 10
-# for n in range(nmbr_avgs):
-
-#     episode_reward_history_mv_avg = []
 
 
 # Generating the ring-topology ansatz to encode the data
@@ -246,45 +239,41 @@ optimizer_out = tf.keras.optimizers.Adam(learning_rate=0.1, amsgrad=True)
 # Assign the model parameters to each optimizer
 w_in, w_var, w_out = 1, 0, 2
 
-print("\n\nBefore training loop!\n\n")
-
 # Main training loop
 env = gym.make("CartPole-v1")
-    
+
 episode_reward_history = []
 step_count = 0
-
 for episode in range(n_episodes):
-
     episode_reward = 0
     state = env.reset()
-    
+
     while True:
         # Interact with env
         interaction = interact_env(state, model, epsilon, n_actions, env)
-        
+
         # Store interaction in the replay memory
         replay_memory.append(interaction)
-        
+
         state = interaction['next_state']
         episode_reward += interaction['reward']
         step_count += 1
-        
+
         # Update model
         if step_count % steps_per_update == 0:
             # Sample a batch of interactions and update Q_function
             training_batch = np.random.choice(replay_memory, size=batch_size)
             Q_learning_update(np.asarray([x['state'] for x in training_batch]),
-                            np.asarray([x['action'] for x in training_batch]),
-                            np.asarray([x['reward'] for x in training_batch], dtype=np.float32),
-                            np.asarray([x['next_state'] for x in training_batch]),
-                            np.asarray([x['done'] for x in training_batch], dtype=np.float32),
-                            model, gamma, n_actions)
-        
+                              np.asarray([x['action'] for x in training_batch]),
+                              np.asarray([x['reward'] for x in training_batch], dtype=np.float32),
+                              np.asarray([x['next_state'] for x in training_batch]),
+                              np.asarray([x['done'] for x in training_batch], dtype=np.float32),
+                              model, gamma, n_actions)
+
         # Update target model
         if step_count % steps_per_target_update == 0:
             model_target.set_weights(model.get_weights())
-        
+
         # Check if the episode is finished
         if interaction['done']:
             break
@@ -292,69 +281,9 @@ for episode in range(n_episodes):
     # Decay epsilon
     epsilon = max(epsilon * decay_epsilon, epsilon_min)
     episode_reward_history.append(episode_reward)
-
     if (episode+1)%10 == 0:
         avg_rewards = np.mean(episode_reward_history[-10:])
-        # episode_reward_history_mv_avg.append(np.mean(episode_reward_history[-10:]))
         print("Episode {}/{}, average last 10 rewards {}".format(
             episode+1, n_episodes, avg_rewards))
-        if avg_rewards >= 30.0: # 500.0
+        if avg_rewards >= 500.0:
             break
-    
-# full_average_list.append(episode_reward_history_mv_avg)
-
-# np.savetxt("reward_history_mv_avg_" + str(n) + ".txt", episode_reward_history_mv_avg)
-
-# print("\n\nFull average list: {}\n\n".format(full_average_list))
-
-def cast_to_probability(arr):
-    max_val = np.max(arr)
-    min_val = np.min(arr)
-
-    new_arr = []
-    for i in range(len(arr)):
-        new_element = (arr[i] - min_val) / (max_val - min_val)
-        new_arr.append(new_element)
-
-    return np.array(new_arr)
-
-
-from PIL import Image
-import os
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-
-state_bounds = np.array([2.4, 2.5, 0.21, 2.5])
-
-env = gym.make('CartPole-v1')
-state = env.reset()
-frames = []
-for t in range(500):
-    im = Image.fromarray(env.render(mode='rgb_array'))
-    frames.append(im)
-    policy = model([tf.convert_to_tensor([state/state_bounds])])
-    action = np.random.choice(n_actions, p=policy.numpy()[0])
-    state, _, done, _ = env.step(action)
-    if done:
-        break
-env.close()
-frames[1].save('./images/gym_CartPole.gif',
-               save_all=True, append_images=frames[2:], optimize=False, duration=40, loop=0)
-
-
-
-# y, error = tolerant_mean(full_average_list)
-# x = np.arange(len(y))
-
-# print("\n\Y, Err: {} \n\n {}\n\n".format(y, error))
-
-# # Saving the resulting plots
-# plt.figure(figsize=(10,5))
-# plt.fill_between(x, y - error, y + error, alpha=0.2, label='error band')
-# plt.plot(y)
-# plt.xlabel('Episode')
-# plt.ylabel('Average of collected rewards')
-# # ax.plot(np.arange(len(y))+1, y, color='green')
-# plt.savefig("quantum_dqn_avg_10_500.png")
-
-## TODO: we're taking the "ensemble" average of moving averages over the episodes
-# is it better to do like that or taking the avgs directly? !!!
